@@ -1,6 +1,6 @@
 # Supplementary Materials to *National Endeavor vs. Global Engagement: Diverging Contributions to Solar and Wind Cost Reductions*
 Yusheng Guan, Kangxin An, Xinzhu Zheng, Shihui Zhang, Can Wang  
-Contact: xinzhuzheng@cup.edu.cn; canwang@tsinghua.edu.cn
+Contact: ysguan@126.com
 
 ## 1. Content of all files
 - *Data_raw.xlsx* contains all raw data collected from IRENA after our pre-processing. 

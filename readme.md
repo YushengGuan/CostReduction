@@ -1,6 +1,6 @@
-# Supplementary Materials to *National Endeavor vs. Global Engagement: Diverging Contributions to Solar and Wind Cost Reductions*
+# Supplementary Materials to *Diverging Drivers of Global Solar and Wind Cost Reductions: Implications for Achieving the 2030 Global Renewable Energy Goals*
 Yusheng Guan, Kangxin An, Xinzhu Zheng, Shihui Zhang, Can Wang  
-Contact: ysguan@126.com
+Contact: xinzhuzheng@cup.edu.cn
 
 ## 1. Content of all files
 - *Data_raw.xlsx* contains all raw data collected from IRENA after our pre-processing. 
@@ -34,5 +34,3 @@ Please kindly run these files in the following order:
 Reg.py, Fig1&S1.py, Fig2.py, Fig3.py and FigS2.py.  
 Reminder: Do not change the files directly if you want to run the executive files.  
 If you have any questions, please contact us by email.
-
-Note: This repository will be public after acceptance of the article.

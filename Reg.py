@@ -33,13 +33,16 @@ country_solar = ['Global', 'Australia', 'France', 'Germany', 'India', 'Italy', '
 reg_result = pd.DataFrame(columns=country_solar)
 for c in country_solar:
     if c != 'Japan':  # there is no data of total installed cost in 2010 in Japan
-        cost = np.array(df_cost_solar[c])
-        capacity_global = np.array(df_capacity_solar['Global_cum'])[10:23]
-        price_si = np.array(df_cost_solar['price_si'])
+        cost = np.array(df_cost_solar[c])[0:14]
+        capacity_global = np.array(df_capacity_solar['Global_cum'])[10:24]  # Year 2010-2023
+        price_si = np.array(df_cost_solar['price_si'])[0:14]
     else:
-        cost = np.array(df_cost_solar[c])[1:]
-        capacity_global = np.array(df_capacity_solar['Global_cum'])[11:23]
-        price_si = np.array(df_cost_solar['price_si'])[1:]
+        cost = np.array(df_cost_solar[c])[1:14]
+        capacity_global = np.array(df_capacity_solar['Global_cum'])[11:24]  # Year 2010-2023
+        price_si = np.array(df_cost_solar['price_si'])[1:14]
+    print('Capacity_global', capacity_global)
+    print('Price_si', price_si)
+    print(cost)
     x = sm.add_constant(np.c_[np.log(capacity_global), np.log(price_si)])
     y = np.log(cost)
     co, se, p = linear_regression(y, x)
@@ -48,9 +51,9 @@ reg_result.to_excel('results/Reg_result_solar.xlsx')
 
 reg_result = pd.DataFrame(columns=country_wind)
 for c in country_wind:
-    cost = np.array(df_cost_wind[c])[1:]
+    cost = np.array(df_cost_wind[c])[1:14]
     print(cost)
-    capacity_global = np.array(df_capacity_wind['Global_cum'])[11:23]  # Year 2010-2022
+    capacity_global = np.array(df_capacity_wind['Global_cum'])[11:24]  # Year 2010-2023
     print(capacity_global)
     x = sm.add_constant(np.c_[np.log(capacity_global)])
     y = np.log(cost)

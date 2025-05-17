@@ -27,7 +27,7 @@ cmap = {'Global': 'grey', 'Australia': 'darkorange', 'France': 'mediumpurple', '
         'Others': 'grey'}
 
 
-x0 = np.linspace(1, 12, 12)
+x0 = np.linspace(1, 13, 13)
 fig, ax = plt.subplots(figsize=(10, 6))
 plt.subplots_adjust(left=0.07, bottom=0.2, right=0.95, top=0.9, wspace=0.2, hspace=0.6)
 cost_sim_random_solar = []  # c, m, t
@@ -35,20 +35,20 @@ cost_price_random_solar = []
 cost_self_random_solar = []
 d_price, d_national, d_global = [], [], []
 se_price, se_national, se_global = [], [], []
-ng = pd.DataFrame(index=range(2011, 2023), columns=country_solar[1:], dtype=float)
-ng_label = pd.DataFrame(index=range(2011, 2023), columns=country_solar[1:], dtype=str)
+ng = pd.DataFrame(index=range(2011, 2024), columns=country_solar[1:], dtype=float)
+ng_label = pd.DataFrame(index=range(2011, 2024), columns=country_solar[1:], dtype=str)
 for c in country_solar[1:]:
     ind = country_solar[1:].index(c)
-    cap_global_cum = np.array(df_capacity_solar['Global_cum'])[10:23]  # Year 2010-2022
-    price_si = np.array(df_cost_solar['price_si'])
+    cap_global_cum = np.array(df_capacity_solar['Global_cum'])[10:24]  # Year 2010-2023
+    price_si = np.array(df_cost_solar['price_si'])[0:14]
     co = result_solar[c][:3].values
     se = result_solar[c][3:6].values
     cost_sim = np.exp(co[0] + co[1] * np.log(cap_global_cum) + co[2] * np.log(price_si))
     co_random = np.random.normal(co[1], se[1], size=random_count)
     cost_obs = np.array(df_cost_solar[c])
-    qt_price = np.array(df_capacity_solar_cum['const'])[10:23]  # Year 2010-2022, constant capacity of 2010
+    qt_price = np.array(df_capacity_solar_cum['const'])[10:24]  # Year 2010-2023, constant capacity of 2010
     cost_price = np.exp(co[0] + co[1] * np.log(qt_price) + co[2] * np.log(price_si))  # only price_si matters
-    qt_self = np.array(df_capacity_solar_cum[c])[10:23]  # Year 2010-2022, cumulative
+    qt_self = np.array(df_capacity_solar_cum[c])[10:24]  # Year 2010-2023, cumulative
     cost_self = np.exp(co[0] + co[1] * np.log(qt_self) + co[2] * np.log(price_si))
     gap = cost_self - cost_sim 
     d_price.append(cost_sim[0] - cost_price[-1])
@@ -62,7 +62,7 @@ for c in country_solar[1:]:
             ng[c].iloc[t] = 0
             ng_label[c].iloc[t] = f'{round((cost_price[t+1] - cost_self[t+1]) / (cost_self[t+1] - cost_sim[t+1]), 2)}'
 heatmap = sns.heatmap(ng, vmin=0, vmax=1, annot=ng_label, fmt='s', cbar=False, cmap=['#B1D8B1', '#D9F0F8'], 
-xticklabels=country_solar[1:], yticklabels=range(2011, 2023))
+xticklabels=country_solar[1:], yticklabels=range(2011, 2024))
 plt.text(-0.9, -0.5, 'a.', fontsize=20, fontweight='bold')
 plt.text(-0.9, -0.5, '      Solar PV', fontsize=15)
 plt.xticks(rotation=45)
@@ -83,15 +83,15 @@ cost_sim_random_wind = []  # c, m, t
 cost_self_random_wind = []
 d_national, d_global = [], []
 se_national, se_global = [], []
-ng = pd.DataFrame(index=range(2011, 2023), columns=country_wind2[1:], dtype=float)
-ng_label = pd.DataFrame(index=range(2011, 2023), columns=country_wind2[1:], dtype=str)
+ng = pd.DataFrame(index=range(2011, 2024), columns=country_wind2[1:], dtype=float)
+ng_label = pd.DataFrame(index=range(2011, 2024), columns=country_wind2[1:], dtype=str)
 for c in country_wind2[1:]:
     ind = country_wind2[1:].index(c)
-    cap_global_cum = np.array(df_capacity_wind['Global_cum'])[10:23]  # Year 2010-2022
+    cap_global_cum = np.array(df_capacity_wind['Global_cum'])[10:24]  # Year 2010-2023
     co = result_wind[c][:2].values
     cost_sim = np.exp(co[0] + co[1] * np.log(cap_global_cum))
     cost_obs = np.array(df_cost_wind[c])
-    qt_self = np.array(df_capacity_wind_cum[c])[10:23]  # Year 2010-2022, cumulative
+    qt_self = np.array(df_capacity_wind_cum[c])[10:24]  # Year 2010-2023, cumulative
     cost_self = np.exp(co[0] + co[1] * np.log(qt_self))
     gap = cost_self - cost_sim
     d_national.append(cost_sim[0] - cost_self[-1])
@@ -105,7 +105,7 @@ for c in country_wind2[1:]:
             ng[c].iloc[t] = 0
             ng_label[c].iloc[t] = f'{round((cost_sim[0] - cost_self[t+1]) / (cost_self[t+1] - cost_sim[t+1]), 2)}'
 heatmap = sns.heatmap(ng, vmin=0, vmax=1, annot=ng_label, fmt='s', cbar=False, cmap=['#B1D8B1', '#D9F0F8'], 
-xticklabels=country_wind[1:], yticklabels=range(2011, 2023))
+xticklabels=country_wind[1:], yticklabels=range(2011, 2024))
 plt.xticks(rotation=45)
 plt.yticks(rotation=0)
 plt.text(-1, -0.5, 'b.', fontsize=20, fontweight='bold')

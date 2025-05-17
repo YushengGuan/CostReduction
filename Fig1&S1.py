@@ -6,6 +6,7 @@ plt.rcParams['font.family'] = 'Arial'  # or 'sans-serif', 'cursive', 'fantasy', 
 
 random_count = 1000
 np.random.seed(0)
+
 df_capacity_solar = pd.read_excel('Data_raw.xlsx', sheet_name='Capacity_solar')
 df_capacity_wind = pd.read_excel('Data_raw.xlsx', sheet_name='Capacity_wind')
 df_capacity_solar_cum = pd.read_excel('Data_raw.xlsx', sheet_name='Scn_nat_solar')
@@ -25,7 +26,7 @@ cmap = {'Global': 'grey', 'Australia': 'darkorange', 'France': 'mediumpurple', '
         'Denmark': 'royalblue', 'Sweden': 'chocolate', 'Canada':  'hotpink', 'Turkey': 'bisque', 'Brazil': 'darkgreen',
         'Others': 'grey'}
 
-x0 = np.linspace(1, 13, 13)
+x0 = np.linspace(1, 14, 14)
 fig, ax = plt.subplots(figsize=(10, 6))
 plt.subplots_adjust(left=0.07, bottom=0.1, right=0.95, top=0.95, wspace=0.2, hspace=0.6)
 cost_sim_random_solar = []  # c, m, t
@@ -33,25 +34,31 @@ cost_price_random_solar = []
 cost_self_random_solar = []
 d_price, d_national, d_global = [], [], []
 se_price, se_national, se_global = [], [], []
+df_solar_NE = pd.DataFrame(columns=country_solar)
+df_solar_GE = pd.DataFrame(columns=country_solar)
+df_wind_NE = pd.DataFrame(columns=country_wind)
+df_wind_GE = pd.DataFrame(columns=country_wind)
 for c in country_solar[1:]:
     ind = country_solar[1:].index(c)
     plt.subplot(3, 4, ind+1)
-    cap_global_cum = np.array(df_capacity_solar['Global_cum'])[10:23]  # Year 2010-2022
-    price_si = np.array(df_cost_solar['price_si'])
+    cap_global_cum = np.array(df_capacity_solar['Global_cum'])[10:24]  # Year 2010-2023
+    price_si = np.array(df_cost_solar['price_si'])[0:14]
     co = result_solar[c][:3].values
     se = result_solar[c][3:6].values
     cost_sim = np.exp(co[0] + co[1] * np.log(cap_global_cum) + co[2] * np.log(price_si))
     co_random = np.random.normal(co[1], se[1], size=random_count)
     # print(cost_sim)
-    cost_obs = np.array(df_cost_solar[c])
-    qt_price = np.array(df_capacity_solar_cum['const'])[10:23]  # Year 2010-2022, constant capacity of 2010
+    cost_obs = np.array(df_cost_solar[c])[0:14]
+    qt_price = np.array(df_capacity_solar_cum['const'])[10:24]  # Year 2010-2023, constant capacity of 2010
     cost_price = np.exp(co[0] + co[1] * np.log(qt_price) + co[2] * np.log(price_si))  # only price_si matters
-    qt_self = np.array(df_capacity_solar_cum[c])[10:23]  # Year 2010-2022, cumulative
+    qt_self = np.array(df_capacity_solar_cum[c])[10:24]  # Year 2010-2023, cumulative
     cost_self = np.exp(co[0] + co[1] * np.log(qt_self) + co[2] * np.log(price_si))
     gap = cost_self - cost_sim 
     d_price.append(cost_sim[0] - cost_price[-1])
     d_national.append(cost_price[-1] - cost_self[-1])
     d_global.append(cost_self[-1] - cost_sim[-1])
+    df_solar_NE[c] = cost_price - cost_self
+    df_solar_GE[c] = cost_self - cost_sim
 
     cost_sims_random = []
     for m in range(len(co_random)):
@@ -74,7 +81,7 @@ for c in country_solar[1:]:
     se_national.append(np.std(d_national_random))
     se_global.append(np.std(d_global_random))
 
-    plt.hlines(cost_sim[0], 1, 13, colors='k', linestyle='--')
+    plt.hlines(cost_sim[0], 1, 14, colors='k', linestyle='--')
     plt.plot(x0, cost_price, label='MP scenario', color='k', linestyle='-.')
     plt.plot(x0, cost_self, label='NE scenario', linestyle=':', color='k')
     plt.plot(x0, cost_sim, label='GE scenario', color='k')
@@ -98,11 +105,12 @@ for c in country_solar[1:]:
         plt.yticks([0, 5000, 10000, 15000], ['0', '5', '10', '15'], fontsize=12)
     if ind == 4:
         plt.ylabel('Total installed cost ($1000/kW)', fontsize=20, labelpad=0)
-    plt.xticks(np.linspace(1, 13, 7), ["'10", "'12", "'14", "'16", "'18", "'20", "'22"], fontsize=12)
+    plt.xticks([1, 3, 5, 7, 9, 11, 14], ["'10", "'12", "'14", "'16", "'18", "'20", "'23"], fontsize=12)
     if ind == 9:
         plt.xlabel('Year', fontsize=20, x=1.15)
 # ax.remove()
 plt.savefig('figs/Country_solar.png', dpi=600)
+
 
 data = [np.array(d_price), np.array(d_national), np.array(d_global)]
 data_se = np.array([0] + se_price + [0] + se_national + [0] + se_global)
@@ -204,15 +212,19 @@ for c in country_wind2[1:]:
     print(c, 'wind')
     ind = country_wind2[1:].index(c)
     plt.subplot(3, 5, ind+1)
-    cap_global_cum = np.array(df_capacity_wind['Global_cum'])[10:23]  # Year 2010-2022
+    cap_global_cum = np.array(df_capacity_wind['Global_cum'])[10:24]  # Year 2010-2023
     co = result_wind[c][:2].values
     cost_sim = np.exp(co[0] + co[1] * np.log(cap_global_cum))
-    cost_obs = np.array(df_cost_wind[c])
-    qt_self = np.array(df_capacity_wind_cum[c])[10:23]  # Year 2010-2022, cumulative
+    cost_obs = np.array(df_cost_wind[c])[0:14]
+    qt_self = np.array(df_capacity_wind_cum[c])[10:24]  # Year 2010-2023, cumulative
     cost_self = np.exp(co[0] + co[1] * np.log(qt_self))
     gap = cost_self - cost_sim 
     d_national.append(cost_sim[0] - cost_self[-1])
     d_global.append(cost_self[-1] - cost_sim[-1])
+
+    df_wind_NE[c] = cost_sim[0] - cost_self
+    df_wind_GE[c] = cost_self - cost_sim
+
     print(gap, '只有自己会贵多少钱')
     print('cost_self', cost_self)
     print('cost_sim', cost_sim)
@@ -235,7 +247,7 @@ for c in country_wind2[1:]:
     print('95%', np.percentile(d_national_random, 97.5), np.percentile(d_national_random, 2.5))
     print('95%', np.percentile(d_global_random, 97.5), np.percentile(d_global_random, 2.5))
 
-    plt.hlines(cost_sim[0], 1, 13, colors='k', linestyle='--')
+    plt.hlines(cost_sim[0], 1, 14, colors='k', linestyle='--')
     plt.plot(x0, cost_self, label='NE scenario', linestyle=':', color='k')
     plt.plot(x0, cost_sim, label='GE scenario', color='k')
     plt.scatter(x0, cost_obs, marker='x', color='k', label='Observations')
@@ -255,7 +267,7 @@ for c in country_wind2[1:]:
         plt.yticks([1000, 4000, 7000, 10000], ['1', '4', '7', '10'], fontsize=12)
     if ind == 5:
         plt.ylabel('Total installed cost ($1000/kW)', fontsize=20, labelpad=5)
-    plt.xticks(np.linspace(1, 13, 4), ["'10", "'14", "'18", "'22"], fontsize=12)
+    plt.xticks([1, 5, 9, 14], ["'10", "'14", "'18", "'23"], fontsize=12)
     if ind == 12:
         plt.xlabel('Year', fontsize=20)
 # ax.remove()
@@ -360,50 +372,57 @@ cmap = {'Australia': 'darkorange', 'France': 'mediumpurple', 'Germany': 'saddleb
                  'United Kingdom': 'lightgreen', 'United States': 'steelblue', 'China': 'firebrick',
         'Denmark': 'royalblue', 'Sweden': 'chocolate', 'Canada':  'hotpink', 'Turkey': 'bisque', 'Brazil': 'darkgreen',
         'Others': 'grey'}
-x0 = np.linspace(1, 13, 13)
+x0 = np.linspace(1, 14, 14)
 fig, ax = plt.subplots(figsize=(10, 6))
 plt.subplots_adjust(left=0.07, bottom=0.1, right=0.95, top=0.95, wspace=0.2, hspace=0.6)
-cost_obs = np.array(df_cost_wind['Global'])
+cost_obs = np.array(df_cost_wind['Global'])[0:14]
 plt.subplot(1, 1, 1)
-capa_global = np.array(df_capacity_wind['Global'])[10:23]  # Year 2010-2022
-CostSum_sim = np.array([0] * 13, dtype='float')
-CostSum_self = np.array([0] * 13, dtype='float')
-cap_global_cum = np.array(df_capacity_wind['Global_cum'])[10:23]  # Year 2010-2022
+capa_global = np.array(df_capacity_wind['Global'])[10:24]  # Year 2010-2023
+CostSum_sim = np.array([0] * 14, dtype='float')
+CostSum_self = np.array([0] * 14, dtype='float')
+cap_global_cum = np.array(df_capacity_wind['Global_cum'])[10:24]  # Year 2010-2023
 for c in country_wind:
-    capa_c = np.array(df_capacity_wind[c])[10:23]
+    capa_c = np.array(df_capacity_wind[c])[10:24]
     co = result_wind[c][:2].values
     cost_sim_c = np.exp(co[0] + co[1] * np.log(cap_global_cum))
     CostSum_sim += cost_sim_c * capa_c
-    qt_self_c = np.array(df_capacity_wind_cum[c])[10:23]  # Year 2010-2022, cumulative
+    qt_self_c = np.array(df_capacity_wind_cum[c])[10:24]  # Year 2010-2022, cumulative
     cost_self_c = np.exp(co[0] + co[1] * np.log(qt_self_c))
     CostSum_self += cost_self_c * capa_c
 cost_sim = CostSum_sim / capa_global
 cost_self = CostSum_self / capa_global
-cost_const = np.array([cost_sim[0]]*13)
+cost_const = np.array([cost_sim[0]]*14)
+
+df_wind_NE['Global'] = cost_const - cost_self
+df_wind_GE['Global'] = cost_self - cost_sim
+
+df_wind_GE.to_excel('results/wind_GE.xlsx', index=False)
+df_wind_NE.to_excel('results/wind_NE.xlsx', index=False)
 
 cost_sim_random = []
 cost_self_random = []
 gap_ne, gap_ge = [], []
 for j in range(random_count):
-    cost_sum_sim = np.array([0] * 13, dtype='float')
-    cost_sum_self = np.array([0] * 13, dtype='float')
+    cost_sum_sim = np.array([0] * 14, dtype='float')
+    cost_sum_self = np.array([0] * 14, dtype='float')
     for i in range(len(country_wind)):
         country = country_wind[i]
-        capa = np.array(df_capacity_wind[country])[10:23]
+        capa = np.array(df_capacity_wind[country])[10:24]
+        
         cost_sum_sim += capa * cost_sim_random_wind[i][j]
         cost_sum_self += capa * cost_self_random_wind[i][j]
     cost_sim_random.append(cost_sum_sim / capa_global)
     cost_self_random.append(cost_sum_self / capa_global)
-    gap_ne_j = np.array([(cost_sum_self / capa_global)[0]]*13, dtype='float') - cost_sum_self / capa_global
+    gap_ne_j = np.array([(cost_sum_self / capa_global)[0]]*14, dtype='float') - cost_sum_self / capa_global
     gap_ge_j = cost_sum_self / capa_global - cost_sum_sim / capa_global
     gap_ne.append(gap_ne_j[-1])
     gap_ge.append(gap_ge_j[-1])
 
-plt.hlines(cost_sim[0], 1, 13, colors='k', linestyle='--')
+plt.hlines(cost_sim[0], 1, 14, colors='k', linestyle='--')
 plt.plot(x0, cost_self, label='NE scenario', linestyle=':', color='k')
 plt.plot(x0, cost_sim, label='GE scenario', color='k')
 plt.xlim(0, 16)
-plt.vlines(13.5, cost_self[-1], cost_const[-1], colors='k')
+plt.vlines(14.5, cost_self[-1], cost_const[-1], colors='k')
 plt.scatter(x0, cost_obs, marker='x', color='k', label='Observations')
 plt.fill_between(x0, np.percentile(cost_sim_random, 95, axis=0),
                  np.percentile(cost_sim_random, 5, axis=0),
@@ -411,16 +430,16 @@ plt.fill_between(x0, np.percentile(cost_sim_random, 95, axis=0),
 plt.fill_between(x0, np.percentile(cost_self_random, 95, axis=0),
                  np.percentile(cost_self_random, 5, axis=0),
                  color='green', alpha=0.3, label='90% CI, NE scenario')
-plt.text(13.8, (cost_self[-1]+cost_const[-1])/2, 'National\nEndeavor', fontsize=12, va='center')
-plt.vlines(13.5, cost_sim[-1], cost_self[-1], colors='k')
-plt.text(13.8, (cost_self[-1]+cost_sim[-1])/2, 'Global\nEngagement', fontsize=12, va='center')
-plt.hlines(cost_const[-1], 13.3, 13.7, colors='k')
-plt.hlines(cost_self[-1], 13.3, 13.7, colors='k')
-plt.hlines(cost_sim[-1], 13.3, 13.7, colors='k')
+plt.text(14.8, (cost_self[-1]+cost_const[-1])/2, 'National\nEndeavor', fontsize=12, va='center')
+plt.vlines(14.5, cost_sim[-1], cost_self[-1], colors='k')
+plt.text(14.8, (cost_self[-1]+cost_sim[-1])/2, 'Global\nEngagement', fontsize=12, va='center')
+plt.hlines(cost_const[-1], 14.3, 14.7, colors='k')
+plt.hlines(cost_self[-1], 14.3, 14.7, colors='k')
+plt.hlines(cost_sim[-1], 14.3, 14.7, colors='k')
 plt.ylim(1000, 3500)
 plt.yticks([1000, 1500, 2000, 2500, 3000, 3500], ['1', '1.5', '2', '2.5', '3', '3.5'], fontsize=12)
 plt.ylabel('Total installed cost ($1000/kW)', fontsize=20, labelpad=5)
-plt.xticks(np.linspace(1, 13, 7), ["2010", "2012", "2014", "2016", "2018", "2020", "2022"], fontsize=12)
+plt.xticks([1, 3, 5, 7, 9, 11, 14], ["2010", "2012", "2014", "2016", "2018", "2020", "2023"], fontsize=12)
 plt.xlabel('Year', fontsize=20)
 plt.gca().spines['top'].set_visible(False)
 plt.gca().spines['right'].set_visible(False)
@@ -440,43 +459,49 @@ cmap = {'Australia': 'darkorange', 'France': 'mediumpurple', 'Germany': 'saddleb
         'Others': 'grey'}
 
 
-x0 = np.linspace(1, 13, 13)
+x0 = np.linspace(1, 14, 14)
 fig, ax = plt.subplots(figsize=(10, 6))
 plt.subplots_adjust(left=0.07, bottom=0.1, right=0.95, top=0.95, wspace=0.2, hspace=0.6)
-cost_obs = np.array(df_cost_solar['Global'])
+cost_obs = np.array(df_cost_solar['Global'])[0:14]
 plt.subplot(1, 1, 1)
-capa_global = np.array(df_capacity_solar['Global'])[10:23]  # Year 2010-2022
-CostSum_sim = np.array([0] * 13, dtype='float')
-CostSum_price = np.array([0] * 13, dtype='float')
-CostSum_self = np.array([0] * 13, dtype='float')
-cap_global_cum = np.array(df_capacity_solar['Global_cum'])[10:23]  # Year 2010-2022
-price_si = np.array(df_cost_solar['price_si'])
+capa_global = np.array(df_capacity_solar['Global'])[10:]  # Year 2010-2022
+CostSum_sim = np.array([0] * 14, dtype='float')
+CostSum_price = np.array([0] * 14, dtype='float')
+CostSum_self = np.array([0] * 14, dtype='float')
+cap_global_cum = np.array(df_capacity_solar['Global_cum'])[10:]  # Year 2010-2022
+price_si = np.array(df_cost_solar['price_si'])[0:14]
 for c in country_solar:
-    capa_c = np.array(df_capacity_solar[c])[10:23]
+    capa_c = np.array(df_capacity_solar[c])[10:]
     co = result_solar[c][:3].values
     cost_sim_c = np.exp(co[0] + co[1] * np.log(cap_global_cum) + co[2] * np.log(price_si))
     CostSum_sim += cost_sim_c * capa_c
-    qt_price_c = np.array(df_capacity_solar_cum['const'])[10:23]  # Year 2010-2022, constant of 2010
+    qt_price_c = np.array(df_capacity_solar_cum['const'])[10:]  # Year 2010-2022, constant of 2010
     cost_price_c = np.exp(co[0] + co[1] * np.log(qt_price_c) + co[2] * np.log(price_si))
     CostSum_price += cost_price_c * capa_c
-    qt_self_c = np.array(df_capacity_solar_cum[c])[10:23]  # Year 2010-2022, cumulative
+    qt_self_c = np.array(df_capacity_solar_cum[c])[10:]  # Year 2010-2022, cumulative
     cost_self_c = np.exp(co[0] + co[1] * np.log(qt_self_c) + co[2] * np.log(price_si))
     CostSum_self += cost_self_c * capa_c
 cost_sim = CostSum_sim / capa_global
 cost_self = CostSum_self / capa_global
 cost_price = CostSum_price / capa_global
 
+df_solar_NE['Global'] = cost_price - cost_self
+df_solar_GE['Global'] = cost_self - cost_sim
+
+df_solar_GE.to_excel('results/solar_GE.xlsx', index=False)
+df_solar_NE.to_excel('results/solar_NE.xlsx', index=False)
+
 cost_sim_random = []
 cost_price_random = []
 cost_self_random = []
 gap_ne, gap_ge = [], []
 for j in range(random_count):
-    cost_sum_sim = np.array([0] * 13, dtype='float')
-    cost_sum_price = np.array([0] * 13, dtype='float')
-    cost_sum_self = np.array([0] * 13, dtype='float')
+    cost_sum_sim = np.array([0] * 14, dtype='float')
+    cost_sum_price = np.array([0] * 14, dtype='float')
+    cost_sum_self = np.array([0] * 14, dtype='float')
     for i in range(len(country_solar)):
         country = country_solar[i]
-        capa = np.array(df_capacity_solar[country])[10:23]
+        capa = np.array(df_capacity_solar[country])[10:]
         cost_sum_sim += capa * cost_sim_random_solar[i][j]
         cost_sum_price += capa * cost_price_random_solar[i][j]
         cost_sum_self += capa * cost_self_random_solar[i][j]
@@ -487,7 +512,7 @@ for j in range(random_count):
     gap_ge_j = cost_sum_self / capa_global - cost_sum_sim / capa_global
     gap_ne.append(gap_ne_j[-1])
     gap_ge.append(gap_ge_j[-1])
-plt.hlines(cost_sim[0], 1, 13, colors='k', linestyle='--')
+plt.hlines(cost_sim[0], 1, 14, colors='k', linestyle='--')
 plt.plot(x0, cost_price, label='MP scenario', color='k', linestyle='-.')
 plt.plot(x0, cost_self, label='NE scenario', linestyle=':', color='k')
 plt.plot(x0, cost_sim, label='GE scenario', color='k')
@@ -502,20 +527,20 @@ plt.fill_between(x0, np.percentile(cost_self_random, 97.5, axis=0),
                  np.percentile(cost_self_random, 2.5, axis=0),
                  color='green', alpha=0.3, label='95% CI, NE scenario')
 plt.xlim(0, 16)
-plt.vlines(13.5, cost_self[-1], cost_price[-1], colors='k')
-plt.text(13.8, (cost_self[-1]+cost_price[-1])/2, 'National\nEndeavor', fontsize=12, va='center')
-plt.vlines(13.5, cost_sim[-1], cost_self[-1], colors='k')
-plt.text(13.8, (cost_self[-1]+cost_sim[-1])/2, 'Global\nEngagement', fontsize=12, va='center')
-plt.vlines(13.5, cost_price[-1], cost_sim[0], colors='k')
-plt.text(13.8, (cost_price[-1]+cost_sim[0])/2, 'PolySilicon\nPrice', fontsize=12, va='center')
-plt.hlines(cost_price[-1], 13.3, 13.7, colors='k')
-plt.hlines(cost_self[-1], 13.3, 13.7, colors='k')
-plt.hlines(cost_sim[-1], 13.3, 13.7, colors='k')
-plt.hlines(cost_sim[0], 13.3, 13.7, colors='k')
+plt.vlines(14.5, cost_self[-1], cost_price[-1], colors='k')
+plt.text(14.8, (cost_self[-1]+cost_price[-1])/2, 'National\nEndeavor', fontsize=12, va='center')
+plt.vlines(14.5, cost_sim[-1], cost_self[-1], colors='k')
+plt.text(14.8, (cost_self[-1]+cost_sim[-1])/2, 'Global\nEngagement', fontsize=12, va='center')
+plt.vlines(14.5, cost_price[-1], cost_sim[0], colors='k')
+plt.text(14.8, (cost_price[-1]+cost_sim[0])/2, 'PolySilicon\nPrice', fontsize=12, va='center')
+plt.hlines(cost_price[-1], 14.3, 14.7, colors='k')
+plt.hlines(cost_self[-1], 14.3, 14.7, colors='k')
+plt.hlines(cost_sim[-1], 14.3, 14.7, colors='k')
+plt.hlines(cost_sim[0], 14.3, 14.7, colors='k')
 plt.ylim(0, 8000)
 plt.yticks([0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000], ['0', '1', '2', '3', '4', '5', '6', '7', '8'], fontsize=12)
 plt.ylabel('Total installed cost ($1000/kW)', fontsize=20, labelpad=5)
-plt.xticks(np.linspace(1, 13, 7), ["2010", "2012", "2014", "2016", "2018", "2020", "2022"], fontsize=12)
+plt.xticks([1, 3, 5, 7, 9, 11, 14], ["2010", "2012", "2014", "2016", "2018", "2020", "2023"], fontsize=12)
 plt.xlabel('Year', fontsize=20)
 plt.gca().spines['top'].set_visible(False)
 plt.gca().spines['right'].set_visible(False)
@@ -555,7 +580,7 @@ plt.axis('off')
 plt.text(0, 1, 'b.', weight='bold', size=20)
 # ax.remove()
 plt.savefig('figs/Fig1.jpg', dpi=600)
-plt.show()
+# plt.show()
 
 fig, ax = plt.subplots(figsize=(16, 20), frameon=False)
 plt.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0, hspace=0)
@@ -573,4 +598,4 @@ plt.yticks([])
 plt.axis('off')
 plt.text(0, 1, 'b.', weight='bold', size=20)
 plt.savefig('figs/FigS1.jpg', dpi=600)
-plt.show()
+# plt.show()
